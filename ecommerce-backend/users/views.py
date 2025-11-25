@@ -1,3 +1,27 @@
-from django.shortcuts import render
+"""API views for user registration and profile management."""
 
-# Create your views here.
+from django.contrib.auth.models import User
+from django.shortcuts import render
+from rest_framework import generics, permissions
+from rest_framework.response import Response
+
+from .serializers import RegisterSerializer, UserSerializer
+
+
+class RegisterView(generics.CreateAPIView):
+    """Create a new user along with an optional profile."""
+
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update or delete the authenticated user's profile."""
+
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        """Return the currently authenticated user."""
+        return self.request.user
