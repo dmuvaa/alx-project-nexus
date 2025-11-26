@@ -31,20 +31,17 @@ if env_path.exists():
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "insecure-default-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", "False").lower() in {"1", "true", "yes"}
+DEBUG = os.getenv("DEBUG", "True").lower() in {"1", "true", "yes"}
 
-# Hosts/domain names that are valid for this site. This is required
-# when DEBUG is False.
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get("ALLOWED_HOSTS", "").split(",")
-    if host.strip()
-]
+hosts = os.getenv("ALLOWED_HOSTS")
+if hosts:
+    ALLOWED_HOSTS = [h.strip() for h in hosts.split(",") if h.strip()]
+else:
+    # Safe defaults for local development
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
-# Application definition
 INSTALLED_APPS = [
-    # Django core apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
