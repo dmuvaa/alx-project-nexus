@@ -1,6 +1,7 @@
 """API views for user registration and profile management."""
 
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.shortcuts import render
 from rest_framework import generics, permissions
 from rest_framework.response import Response

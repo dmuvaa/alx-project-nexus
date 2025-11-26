@@ -204,20 +204,22 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
-# Store task results using django‑celery‑results
+# Store task results using django-celery-results
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "default"
 
-# Configure periodic tasks schedules here or via the Django admin. These
-# entries illustrate how to run scheduled maintenance tasks. You can
-# modify the schedule or add additional entries as your application
-# evolves.
 CELERY_BEAT_SCHEDULE = {
     "disable-out-of-stock-products": {
         "task": "core.tasks.disable_out_of_stock_products",
-        "schedule": 3600.0,  # every hour
+        "schedule": 3600.0,
     },
 }
+
+if DEBUG:
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
+    CELERY_BROKER_URL = "memory://"
+
 
 
 # Miscellaneous configuration
