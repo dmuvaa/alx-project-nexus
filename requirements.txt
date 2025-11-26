@@ -1,0 +1,13 @@
+django
+djangorestframework
+djangorestframework-simplejwt
+django-filter
+drf-spectacular
+celery
+django-celery-results
+django-celery-beat
+redis
+django-redis
+psycopg2-binary
+python-dotenv
+requests
