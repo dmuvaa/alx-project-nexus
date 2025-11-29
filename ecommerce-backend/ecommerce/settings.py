@@ -1,4 +1,4 @@
-"""Django settings for the e‑commerce project.
+"""Django settings for the e-commerce project.
 
 This configuration module centralizes all settings required for the
 application. It heavily relies on environment variables to allow
@@ -12,20 +12,23 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 
-# Determine the base directory two levels above this file so that
-# relative paths can be constructed easily.
+"""Base paths and environment loading"""
+
+# Determine the base directory so that relative paths can be constructed easily.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from ``.env`` in the project root if it
-# exists. This allows developers to define local overrides without
-# polluting version control.
+# Load environment variables from ``.env`` in the project root if it exists.
+# This allows local overrides without polluting version control.
 env_path = BASE_DIR / ".." / ".env"
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 
+
+"""Security configuration"""
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "insecure-default-key")
@@ -41,7 +44,10 @@ else:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
+"""Installed applications"""
+
 INSTALLED_APPS = [
+    # Django core apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -49,7 +55,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Third‑party apps
+    # Third-party apps
+    "corsheaders",
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt.token_blacklist",
@@ -66,8 +73,13 @@ INSTALLED_APPS = [
     "core",
 ]
 
+
+"""Middleware configuration"""
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Handle CORS as early as possible
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -77,6 +89,9 @@ MIDDLEWARE = [
     # Custom middleware defined in core.middleware
     "core.middleware.RequestTimingMiddleware",
 ]
+
+
+"""URL and WSGI/ASGI configuration"""
 
 ROOT_URLCONF = "ecommerce.urls"
 
@@ -100,10 +115,11 @@ WSGI_APPLICATION = "ecommerce.wsgi.application"
 ASGI_APPLICATION = "ecommerce.asgi.application"
 
 
-# Database configuration. By default the project uses SQLite for
-# convenience. To use PostgreSQL or another database engine, set
-# ``DB_ENGINE`` and the corresponding connection credentials in your
-# environment.
+"""Database configuration"""
+
+# By default the project uses SQLite for convenience. To use PostgreSQL or
+# another engine, set DB_ENGINE and the corresponding connection credentials
+# in your environment.
 DATABASES = {
     "default": {
         "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.sqlite3"),
@@ -116,7 +132,8 @@ DATABASES = {
 }
 
 
-# Password validation
+"""Password validation"""
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -133,8 +150,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization. The default time zone is configurable via
-# ``TZ`` environment variable. For this project we default to Africa/Nairobi.
+"""Internationalization"""
+
+# The default time zone is configurable via the TZ environment variable.
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = os.environ.get("TZ", "Africa/Nairobi")
 USE_I18N = True
@@ -142,17 +160,23 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
+"""Static and media files"""
+
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 
-# REST framework configuration. These defaults enforce JWT
-# authentication and pagination for all API endpoints.
+"""REST framework configuration"""
+
+# Support both session and JWT authentication. SessionAuthentication allows
+# the browsable API and Swagger UI to respect the Django admin login cookie,
+# while JWT remains the primary mechanism for API clients.
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -169,36 +193,46 @@ REST_FRAMEWORK = {
 }
 
 
-# drf-spectacular configuration for OpenAPI/Swagger
+"""drf-spectacular (OpenAPI/Swagger) configuration"""
+
 SPECTACULAR_SETTINGS = {
-    "TITLE": "E‑Commerce API",
+    "TITLE": "E-Commerce API",
     "DESCRIPTION": "Backend for product catalog, categories, orders, payments and user management",
     "VERSION": "2.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
 
 
-# Cache configuration using django‑redis. This improves performance for
-# session and query caching. If ``REDIS_URL`` is not set, an in‑memory
-# backend will be used.
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get("REDIS_URL", "redis://localhost:6379/1"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+"""Cache and session configuration"""
+
+# In production we use Redis for both caching and the session backend.
+# In development (DEBUG=True) we fall back to an in-memory cache and
+# database sessions so Redis is not required.
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-ecommerce-dev",
+        }
     }
-}
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": os.environ.get("REDIS_URL", "redis://localhost:6379/1"),
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        }
+    }
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
 
-# Use cache based sessions for performance
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
 
+"""Celery configuration"""
 
-# Celery configuration
 CELERY_BROKER_URL = os.environ.get("RABBITMQ_URL") or os.environ.get("REDIS_URL")
-CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -211,16 +245,42 @@ CELERY_CACHE_BACKEND = "default"
 CELERY_BEAT_SCHEDULE = {
     "disable-out-of-stock-products": {
         "task": "core.tasks.disable_out_of_stock_products",
-        "schedule": 3600.0,
+        "schedule": 3600.0,  # every hour
     },
 }
 
+# In development, run tasks eagerly and use an in-memory broker so you
+# don't need RabbitMQ/Redis running just to test basic flows.
 if DEBUG:
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True
     CELERY_BROKER_URL = "memory://"
 
 
+"""CORS configuration"""
 
-# Miscellaneous configuration
+# Allow requests from local Next.js development servers.
+# In production, update this list to include your deployed frontend domains.
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+
+"""Miscellaneous configuration"""
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

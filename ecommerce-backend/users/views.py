@@ -26,3 +26,10 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         """Return the currently authenticated user."""
         return self.request.user
+    
+class UserListView(generics.ListAPIView):
+    """List all users (admin-only)."""
+
+    queryset = get_user_model().objects.all().select_related("userprofile")
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
