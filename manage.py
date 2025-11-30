@@ -2,23 +2,37 @@
 """Django's command‑line utility for administrative tasks.
 
 This script serves as the entry point for most management commands used
-to interact with the Django project. It sets the default settings
-module and delegates execution to Django's built‑in command
-infrastructure. Keeping this file minimal avoids import side effects
-when running commands such as migrations or the development server.
+to interact with the Django project. It ensures that the Django
+``ecommerce`` project package is importable even when this file lives
+outside of the project package (for example in the repository root).
+
+The script inserts the ``ecommerce-backend`` directory into
+``sys.path`` so Python can locate the ``ecommerce`` package. It then
+delegates to Django's built‑in command infrastructure. Keeping this
+file minimal avoids import side effects when running commands such as
+migrations or the development server.
 """
 
 import os
 import sys
+from pathlib import Path
 
 
 def main() -> None:
     """Run administrative tasks."""
-    # If the DJANGO_SETTINGS_MODULE environment variable isn't set,
-    # default to the settings module for this project. This allows
-    # commands to be executed without needing to export variables in
-    # development environments.
+    # Ensure the Django project package is on the Python path.  The
+    # ``ecommerce`` package lives in the ``ecommerce-backend`` directory.
+    base_dir = Path(__file__).resolve().parent
+    backend_dir = base_dir / "ecommerce-backend"
+    if str(backend_dir) not in sys.path:
+        sys.path.insert(0, str(backend_dir))
+
+    # Configure the default settings module for this project.  If
+    # DJANGO_SETTINGS_MODULE is already defined in the environment
+    # (e.g. when running under uWSGI or Gunicorn), this call is a
+    # no-op.
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ecommerce.settings")
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

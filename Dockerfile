@@ -17,5 +17,7 @@ COPY . .
 # Collect static files at build time (optional)
 # RUN python manage.py collectstatic --noinput
 
-# Default command: run the application using Gunicorn
-CMD ["gunicorn", "ecommerce.wsgi:application", "--bind", "0.0.0.0:8000"]
+
+
+# Default command for production
+CMD ["gunicorn", "ecommerce.wsgi:application", "--chdir", "ecommerce-backend", "--bind", "0.0.0.0:8000"]
