@@ -40,8 +40,12 @@ hosts = os.getenv("ALLOWED_HOSTS")
 if hosts:
     ALLOWED_HOSTS = [h.strip() for h in hosts.split(",") if h.strip()]
 else:
-    # Safe defaults for local development
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+    # Safe defaults for local development + Railway preview
+    ALLOWED_HOSTS = [
+        "localhost",
+        "127.0.0.1",
+        "alx-project-nexus-production-934e.up.railway.app",
+    ]
 
 
 """Installed applications"""
@@ -264,6 +268,7 @@ if DEBUG:
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://alx-project-nexus-production-934e.up.railway.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -280,6 +285,9 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://alx-project-nexus-production-934e.up.railway.app",
+]
 
 """Miscellaneous configuration"""
 
